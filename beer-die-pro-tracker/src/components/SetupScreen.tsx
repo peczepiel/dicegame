@@ -18,32 +18,34 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStart }) => {
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col min-h-screen bg-[#F2F2F7] p-6 pb-12 font-sans"
+      className="flex flex-col min-h-screen bg-gradient-to-br from-white via-sky-50 to-sky-100 p-6 pb-12 font-sans"
     >
-      <header className="mb-8">
-        <h1 className="text-4xl font-bold text-black tracking-tight">New Game</h1>
-        <p className="text-[#8E8E93] text-lg">Set up your 2v2 Beer Die match</p>
+      <header className="mb-10 mt-4">
+        <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-sky-600 to-sky-500 tracking-tight">Beer Die Pro</h1>
+        <p className="text-gray-600 text-lg font-medium mt-2">Set up your 2v2 match</p>
       </header>
 
-      <div className="space-y-6">
+      <div className="space-y-6 flex-1">
         {/* Team A */}
-        <section className="bg-white rounded-2xl p-5 shadow-sm border border-black/5">
-          <div className="flex items-center gap-2 mb-4 text-[#007AFF]">
-            <Users size={20} />
-            <h2 className="font-semibold text-lg uppercase tracking-wider">Team A</h2>
+        <section className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-sky-100/50">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center">
+              <Users size={24} className="text-white" />
+            </div>
+            <h2 className="font-bold text-xl uppercase tracking-wide text-sky-700">Team A</h2>
           </div>
           <div className="space-y-4">
             <input
               type="text"
               placeholder="Player 1 Name"
-              className="w-full bg-[#F2F2F7] rounded-xl p-4 text-lg focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+              className="w-full bg-gradient-to-br from-sky-50 to-sky-100/50 border-2 border-sky-200 rounded-xl p-4 text-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all placeholder-gray-400"
               value={pA1}
               onChange={(e) => setPA1(e.target.value)}
             />
             <input
               type="text"
               placeholder="Player 2 Name"
-              className="w-full bg-[#F2F2F7] rounded-xl p-4 text-lg focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+              className="w-full bg-gradient-to-br from-sky-50 to-sky-100/50 border-2 border-sky-200 rounded-xl p-4 text-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all placeholder-gray-400"
               value={pA2}
               onChange={(e) => setPA2(e.target.value)}
             />
@@ -51,23 +53,25 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStart }) => {
         </section>
 
         {/* Team B */}
-        <section className="bg-white rounded-2xl p-5 shadow-sm border border-black/5">
-          <div className="flex items-center gap-2 mb-4 text-[#FF3B30]">
-            <Users size={20} />
-            <h2 className="font-semibold text-lg uppercase tracking-wider">Team B</h2>
+        <section className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-red-100/50">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center">
+              <Users size={24} className="text-white" />
+            </div>
+            <h2 className="font-bold text-xl uppercase tracking-wide text-red-700">Team B</h2>
           </div>
           <div className="space-y-4">
             <input
               type="text"
               placeholder="Player 1 Name"
-              className="w-full bg-[#F2F2F7] rounded-xl p-4 text-lg focus:outline-none focus:ring-2 focus:ring-[#FF3B30]"
+              className="w-full bg-gradient-to-br from-red-50 to-red-100/50 border-2 border-red-200 rounded-xl p-4 text-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all placeholder-gray-400"
               value={pB1}
               onChange={(e) => setPB1(e.target.value)}
             />
             <input
               type="text"
               placeholder="Player 2 Name"
-              className="w-full bg-[#F2F2F7] rounded-xl p-4 text-lg focus:outline-none focus:ring-2 focus:ring-[#FF3B30]"
+              className="w-full bg-gradient-to-br from-red-50 to-red-100/50 border-2 border-red-200 rounded-xl p-4 text-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all placeholder-gray-400"
               value={pB2}
               onChange={(e) => setPB2(e.target.value)}
             />
@@ -75,21 +79,23 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStart }) => {
         </section>
 
         {/* Target Score */}
-        <section className="bg-white rounded-2xl p-5 shadow-sm border border-black/5">
-          <div className="flex items-center gap-2 mb-4 text-[#34C759]">
-            <Target size={20} />
-            <h2 className="font-semibold text-lg uppercase tracking-wider">Target Score</h2>
+        <section className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-emerald-100/50">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+              <Target size={24} className="text-white" />
+            </div>
+            <h2 className="font-bold text-xl uppercase tracking-wide text-emerald-700">Target Score</h2>
           </div>
           <div className="flex gap-3">
             <button
               onClick={() => { setTarget(11); setIsCustom(false); }}
-              className={`flex-1 py-4 rounded-xl font-bold text-lg transition-all ${!isCustom ? 'bg-[#34C759] text-white shadow-lg' : 'bg-[#F2F2F7] text-[#8E8E93]'}`}
+              className={`flex-1 py-4 rounded-xl font-bold text-lg transition-all ${!isCustom ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-300/50 scale-105' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
             >
               11
             </button>
             <button
               onClick={() => setIsCustom(true)}
-              className={`flex-1 py-4 rounded-xl font-bold text-lg transition-all ${isCustom ? 'bg-[#34C759] text-white shadow-lg' : 'bg-[#F2F2F7] text-[#8E8E93]'}`}
+              className={`flex-1 py-4 rounded-xl font-bold text-lg transition-all ${isCustom ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-300/50 scale-105' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
             >
               Custom
             </button>
@@ -99,22 +105,22 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStart }) => {
               <input
                 type="number"
                 placeholder="Enter custom score"
-                className="w-full bg-[#F2F2F7] rounded-xl p-4 text-lg focus:outline-none focus:ring-2 focus:ring-[#34C759]"
+                className="w-full bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-2 border-emerald-200 rounded-xl p-4 text-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all placeholder-gray-400"
                 value={target}
                 onChange={(e) => setTarget(parseInt(e.target.value) || 0)}
               />
             </motion.div>
           )}
         </section>
-
-        <button
-          onClick={() => onStart(pA1, pA2, pB1, pB2, target)}
-          className="w-full bg-black text-white py-5 rounded-2xl font-bold text-xl shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-transform"
-        >
-          <Play fill="white" size={24} />
-          Start Game
-        </button>
       </div>
+
+      <button
+        onClick={() => onStart(pA1, pA2, pB1, pB2, target)}
+        className="w-full bg-gradient-to-br from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 text-white py-5 rounded-2xl font-bold text-xl shadow-xl shadow-sky-400/50 flex items-center justify-center gap-3 active:scale-95 transition-all mt-8"
+      >
+        <Play fill="white" size={24} />
+        Start Game
+      </button>
     </motion.div>
   );
 };

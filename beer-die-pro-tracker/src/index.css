@@ -6,7 +6,7 @@
 }
 
 body {
-  background-color: #F2F2F7;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fc 100%);
   color: #1C1C1E;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -21,4 +21,14 @@ body {
 /* Custom scrollbar for a cleaner look */
 ::-webkit-scrollbar {
   width: 0px;
+}
+
+/* Custom color definitions for better theme */
+:root {
+  --team-a: #0066FF;
+  --team-b: #FF3333;
+  --success: #34C759;
+  --warning: #FF9500;
+  --danger: #FF3333;
+  --info: #30B0C0;
 }

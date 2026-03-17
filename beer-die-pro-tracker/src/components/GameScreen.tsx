@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { GameState, ThrowResult, DefenseResult, Player } from '../types';
 import { PlayerCard } from './PlayerCard';
-import { Undo2, RotateCcw, Trophy } from 'lucide-react';
+import { Undo2, RotateCcw, Trophy, ArrowUpDown, ArrowLeftRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { shouldTriggerRedemption, resolveRedemptionOutcome } from '../gameLogic';
 
@@ -20,6 +20,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
   const [defenseSelections, setDefenseSelections] = useState<Record<string, DefenseResult | null>>({});
   const [isStay, setIsStay] = useState(false);
   const [plunkDrinkerId, setPlunkDrinkerId] = useState<string | null>(null);
+  const [isTeamAOnTop, setIsTeamAOnTop] = useState(true);
 
   const offenseTeam = gameState.offenseTeamId === 'A' ? gameState.teamA : gameState.teamB;
   const defenseTeam = gameState.offenseTeamId === 'A' ? gameState.teamB : gameState.teamA;
@@ -27,17 +28,27 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
   // Static colors for fixed sides
   const teamAColor = '#0066FF';
   const teamBColor = '#FF3333';
-  const isTeamAOffense = gameState.offenseTeamId === 'A';
+  const topTeamId = isTeamAOnTop ? 'A' : 'B';
+  const bottomTeamId = isTeamAOnTop ? 'B' : 'A';
+  const topTeam = topTeamId === 'A' ? gameState.teamA : gameState.teamB;
+  const bottomTeam = bottomTeamId === 'A' ? gameState.teamA : gameState.teamB;
+  const topTeamColor = topTeamId === 'A' ? teamAColor : teamBColor;
+  const bottomTeamColor = bottomTeamId === 'A' ? teamAColor : teamBColor;
+
+  const createHistorySnapshot = (state: GameState) => {
+    return JSON.stringify({ ...state, history: [] });
+  };
 
   const saveHistory = () => {
-    const history = [...gameState.history, JSON.stringify(gameState)];
+    const history = [...gameState.history, createHistorySnapshot(gameState)];
     if (history.length > 20) history.shift();
     return history;
   };
 
   const undo = () => {
     if (gameState.history.length === 0) return;
-    const lastState = JSON.parse(gameState.history[gameState.history.length - 1]);
+    const lastState = JSON.parse(gameState.history[gameState.history.length - 1]) as GameState;
+    lastState.history = gameState.history.slice(0, -1);
     onUpdate(lastState);
     setStep('OFFENSE');
     setCurrentThrowResult(null);
@@ -57,6 +68,32 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
     const updatePlayer = (p: Player) => p.id === playerId ? { ...p, stats: { ...p.stats, lostDice: p.stats.lostDice + 1 } } : p;
     newState.teamA.players = newState.teamA.players.map(updatePlayer) as [Player, Player];
     newState.teamB.players = newState.teamB.players.map(updatePlayer) as [Player, Player];
+    onUpdate(newState);
+  };
+
+  const swapTeamPlayers = (teamId: 'A' | 'B') => {
+    const newState = { ...gameState, history: saveHistory() };
+    const currentOffensePlayerId =
+      gameState.offenseTeamId === teamId
+        ? (teamId === 'A' ? gameState.teamA : gameState.teamB).players[gameState.currentThrowerIndex].id
+        : null;
+
+    if (teamId === 'A') {
+      const [p1, p2] = newState.teamA.players;
+      newState.teamA.players = [p2, p1];
+    } else {
+      const [p1, p2] = newState.teamB.players;
+      newState.teamB.players = [p2, p1];
+    }
+
+    if (currentOffensePlayerId) {
+      const updatedOffenseTeam = teamId === 'A' ? newState.teamA : newState.teamB;
+      const newIndex = updatedOffenseTeam.players.findIndex(p => p.id === currentOffensePlayerId);
+      if (newIndex !== -1) {
+        newState.currentThrowerIndex = newIndex;
+      }
+    }
+
     onUpdate(newState);
   };
 
@@ -232,18 +269,31 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
             <Undo2 size={18} className="text-gray-600" />
           </button>
           
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
             <div className="text-center">
-              <div className="text-[10px] font-black text-sky-600 uppercase tracking-widest">Team A</div>
-              <div className="text-3xl font-black text-sky-600 leading-none">{gameState.teamA.score}</div>
+              <div className={`text-[10px] font-black uppercase tracking-widest ${topTeamId === 'A' ? 'text-sky-600' : 'text-red-500'}`}>
+                Team {topTeamId}
+              </div>
+              <div className={`text-3xl font-black leading-none ${topTeamId === 'A' ? 'text-sky-600' : 'text-red-500'}`}>
+                {topTeamId === 'A' ? gameState.teamA.score : gameState.teamB.score}
+              </div>
             </div>
-            <div className="text-xl font-bold text-gray-300">–</div>
+            <button
+              onClick={() => setIsTeamAOnTop(prev => !prev)}
+              className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-full active:scale-95 transition-all"
+              title="Swap team positions"
+            >
+              <ArrowUpDown size={16} className="text-gray-600" />
+            </button>
             <div className="text-center">
-              <div className="text-[10px] font-black text-red-500 uppercase tracking-widest">Team B</div>
-              <div className="text-3xl font-black text-red-500 leading-none">{gameState.teamB.score}</div>
+              <div className={`text-[10px] font-black uppercase tracking-widest ${bottomTeamId === 'A' ? 'text-sky-600' : 'text-red-500'}`}>
+                Team {bottomTeamId}
+              </div>
+              <div className={`text-3xl font-black leading-none ${bottomTeamId === 'A' ? 'text-sky-600' : 'text-red-500'}`}>
+                {bottomTeamId === 'A' ? gameState.teamA.score : gameState.teamB.score}
+              </div>
             </div>
           </div>
-
           <button onClick={onReset} className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-full active:scale-95 transition-all">
             <RotateCcw size={18} className="text-gray-600" />
           </button>
@@ -262,28 +312,47 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
             </div>
           )}
         </div>
+
       </header>
 
       {/* Main Game Layout */}
       <main className={`flex-1 flex flex-col p-4 max-w-md mx-auto w-full relative min-h-0 transition-opacity ${gameState.phase === 'gameOver' ? 'opacity-40 pointer-events-none' : ''}`}>
         
-        {/* TOP ROW: Team A Players */}
-        <div className="flex justify-between w-full z-10">
-          {gameState.teamA.players.map((p, idx) => (
-            <div key={p.id} className="flex-1 flex justify-center max-w-[45%]">
-              <PlayerCard
-                player={p}
-                index={idx}
-                isOffense={isTeamAOffense}
-                isCurrentThrower={isTeamAOffense && gameState.currentThrowerIndex === idx}
-                teamColor={teamAColor}
-                onBeerAdd={handleBeerAdd}
-                onDieLost={handleDieLost}
-                onSelectThrower={isTeamAOffense ? (i) => onUpdate({ ...gameState, currentThrowerIndex: i }) : undefined}
-                isSmall={true}
-              />
-            </div>
-          ))}
+        {/* TOP ROW: Top Team Players */}
+        <div className="flex items-center justify-between w-full z-10">
+          <div className="flex-1 flex justify-center max-w-[45%]">
+            <PlayerCard
+              player={topTeam.players[0]}
+              index={0}
+              isOffense={gameState.offenseTeamId === topTeamId}
+              isCurrentThrower={gameState.offenseTeamId === topTeamId && gameState.currentThrowerIndex === 0}
+              teamColor={topTeamColor}
+              onBeerAdd={handleBeerAdd}
+              onDieLost={handleDieLost}
+              onSelectThrower={gameState.offenseTeamId === topTeamId ? (i) => onUpdate({ ...gameState, currentThrowerIndex: i }) : undefined}
+              isSmall={true}
+            />
+          </div>
+          <button
+            onClick={() => swapTeamPlayers(topTeamId)}
+            className="mx-2 p-2 rounded-full bg-white/80 border border-gray-200 shadow-sm hover:bg-white active:scale-95 transition-all"
+            title={`Swap Team ${topTeamId} player positions`}
+          >
+            <ArrowLeftRight size={14} className="text-gray-600" />
+          </button>
+          <div className="flex-1 flex justify-center max-w-[45%]">
+            <PlayerCard
+              player={topTeam.players[1]}
+              index={1}
+              isOffense={gameState.offenseTeamId === topTeamId}
+              isCurrentThrower={gameState.offenseTeamId === topTeamId && gameState.currentThrowerIndex === 1}
+              teamColor={topTeamColor}
+              onBeerAdd={handleBeerAdd}
+              onDieLost={handleDieLost}
+              onSelectThrower={gameState.offenseTeamId === topTeamId ? (i) => onUpdate({ ...gameState, currentThrowerIndex: i }) : undefined}
+              isSmall={true}
+            />
+          </div>
         </div>
 
         {/* CENTER TABLE (Skinny Rectangle) */}
@@ -498,23 +567,41 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
           </AnimatePresence>
         </div>
 
-        {/* BOTTOM ROW: Team B Players */}
-        <div className="flex justify-between w-full z-10">
-          {gameState.teamB.players.map((p, idx) => (
-            <div key={p.id} className="flex-1 flex justify-center max-w-[45%]">
-              <PlayerCard
-                player={p}
-                index={idx}
-                isOffense={!isTeamAOffense}
-                isCurrentThrower={!isTeamAOffense && gameState.currentThrowerIndex === idx}
-                teamColor={teamBColor}
-                onBeerAdd={handleBeerAdd}
-                onDieLost={handleDieLost}
-                onSelectThrower={!isTeamAOffense ? (i) => onUpdate({ ...gameState, currentThrowerIndex: i }) : undefined}
-                isSmall={true}
-              />
-            </div>
-          ))}
+        {/* BOTTOM ROW: Bottom Team Players */}
+        <div className="flex items-center justify-between w-full z-10">
+          <div className="flex-1 flex justify-center max-w-[45%]">
+            <PlayerCard
+              player={bottomTeam.players[0]}
+              index={0}
+              isOffense={gameState.offenseTeamId === bottomTeamId}
+              isCurrentThrower={gameState.offenseTeamId === bottomTeamId && gameState.currentThrowerIndex === 0}
+              teamColor={bottomTeamColor}
+              onBeerAdd={handleBeerAdd}
+              onDieLost={handleDieLost}
+              onSelectThrower={gameState.offenseTeamId === bottomTeamId ? (i) => onUpdate({ ...gameState, currentThrowerIndex: i }) : undefined}
+              isSmall={true}
+            />
+          </div>
+          <button
+            onClick={() => swapTeamPlayers(bottomTeamId)}
+            className="mx-2 p-2 rounded-full bg-white/80 border border-gray-200 shadow-sm hover:bg-white active:scale-95 transition-all"
+            title={`Swap Team ${bottomTeamId} player positions`}
+          >
+            <ArrowLeftRight size={14} className="text-gray-600" />
+          </button>
+          <div className="flex-1 flex justify-center max-w-[45%]">
+            <PlayerCard
+              player={bottomTeam.players[1]}
+              index={1}
+              isOffense={gameState.offenseTeamId === bottomTeamId}
+              isCurrentThrower={gameState.offenseTeamId === bottomTeamId && gameState.currentThrowerIndex === 1}
+              teamColor={bottomTeamColor}
+              onBeerAdd={handleBeerAdd}
+              onDieLost={handleDieLost}
+              onSelectThrower={gameState.offenseTeamId === bottomTeamId ? (i) => onUpdate({ ...gameState, currentThrowerIndex: i }) : undefined}
+              isSmall={true}
+            />
+          </div>
         </div>
 
       </main>

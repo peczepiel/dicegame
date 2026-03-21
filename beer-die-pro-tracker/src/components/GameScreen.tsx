@@ -4,6 +4,17 @@ import { PlayerCard } from './PlayerCard';
 import { Undo2, RotateCcw, Trophy, ArrowUpDown, ArrowLeftRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { shouldTriggerRedemption, resolveRedemptionOutcome } from '../gameLogic';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface GameScreenProps {
   gameState: GameState;
@@ -25,15 +36,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
   const offenseTeam = gameState.offenseTeamId === 'A' ? gameState.teamA : gameState.teamB;
   const defenseTeam = gameState.offenseTeamId === 'A' ? gameState.teamB : gameState.teamA;
   
-  // Static colors for fixed sides
-  const teamAColor = '#0066FF';
-  const teamBColor = '#FF3333';
   const topTeamId = isTeamAOnTop ? 'A' : 'B';
   const bottomTeamId = isTeamAOnTop ? 'B' : 'A';
   const topTeam = topTeamId === 'A' ? gameState.teamA : gameState.teamB;
   const bottomTeam = bottomTeamId === 'A' ? gameState.teamA : gameState.teamB;
-  const topTeamColor = topTeamId === 'A' ? teamAColor : teamBColor;
-  const bottomTeamColor = bottomTeamId === 'A' ? teamAColor : teamBColor;
 
   const createHistorySnapshot = (state: GameState) => {
     return JSON.stringify({ ...state, history: [] });
@@ -260,59 +266,62 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-b from-zinc-700 via-zinc-800 to-zinc-900 overflow-hidden">
+    <div className="flex min-h-screen flex-col bg-app">
       
       {/* Header (Top Scoreboard) */}
       <header className="px-4 pt-6 pb-2 z-20">
-        <div className="bg-white/95 backdrop-blur-md rounded-2xl border border-gray-200 p-3 flex justify-between items-center shadow-[0_4px_20px_rgba(0,0,0,0.3)] max-w-md mx-auto w-full">
-          <button onClick={undo} className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-full active:scale-95 transition-all">
-            <Undo2 size={18} className="text-gray-600" />
-          </button>
-          
-          <div className="flex items-center gap-4">
-            <div className="text-center">
-              <div className={`text-[10px] font-black uppercase tracking-widest ${topTeamId === 'A' ? 'text-sky-600' : 'text-red-500'}`}>
-                Team {topTeamId}
-              </div>
-              <div className={`text-3xl font-black leading-none ${topTeamId === 'A' ? 'text-sky-600' : 'text-red-500'}`}>
-                {topTeamId === 'A' ? gameState.teamA.score : gameState.teamB.score}
-              </div>
-            </div>
-            <button
-              onClick={() => setIsTeamAOnTop(prev => !prev)}
-              className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-full active:scale-95 transition-all"
-              title="Swap team positions"
-            >
-              <ArrowUpDown size={16} className="text-gray-600" />
-            </button>
-            <div className="text-center">
-              <div className={`text-[10px] font-black uppercase tracking-widest ${bottomTeamId === 'A' ? 'text-sky-600' : 'text-red-500'}`}>
-                Team {bottomTeamId}
-              </div>
-              <div className={`text-3xl font-black leading-none ${bottomTeamId === 'A' ? 'text-sky-600' : 'text-red-500'}`}>
-                {bottomTeamId === 'A' ? gameState.teamA.score : gameState.teamB.score}
-              </div>
-            </div>
-          </div>
-          <button onClick={onReset} className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-full active:scale-95 transition-all">
-            <RotateCcw size={18} className="text-gray-600" />
-          </button>
-        </div>
+        <Card className="mx-auto w-full max-w-md border-border/60 bg-card/95 shadow-md">
+          <div className="flex items-center justify-between p-3">
+            <Button variant="ghost" size="icon" onClick={undo} className="rounded-full">
+              <Undo2 size={18} className="text-muted-foreground" />
+            </Button>
 
-        {/* Status Indicators */}
-        <div className="max-w-md mx-auto">
-          {gameState.isOvertime && (
-            <div className="bg-gradient-to-r from-amber-100 to-amber-50 text-amber-800 text-[10px] font-bold py-1.5 px-3 rounded-lg text-center uppercase tracking-widest border border-amber-300 mt-2 shadow-sm">
-              ⚡ Overtime
+            <div className="flex items-center gap-4">
+              <div className="text-center">
+                <div className={`text-[10px] font-semibold uppercase tracking-[0.3em] ${topTeamId === 'A' ? 'text-team-a' : 'text-team-b'}`}>
+                  Team {topTeamId}
+                </div>
+                <div className={`text-3xl font-semibold leading-none ${topTeamId === 'A' ? 'text-team-a' : 'text-team-b'}`}>
+                  {topTeamId === 'A' ? gameState.teamA.score : gameState.teamB.score}
+                </div>
+              </div>
+              <Button
+                variant="secondary"
+                size="icon"
+                onClick={() => setIsTeamAOnTop(prev => !prev)}
+                className="rounded-full"
+                title="Swap team positions"
+              >
+                <ArrowUpDown size={16} className="text-muted-foreground" />
+              </Button>
+              <div className="text-center">
+                <div className={`text-[10px] font-semibold uppercase tracking-[0.3em] ${bottomTeamId === 'A' ? 'text-team-a' : 'text-team-b'}`}>
+                  Team {bottomTeamId}
+                </div>
+                <div className={`text-3xl font-semibold leading-none ${bottomTeamId === 'A' ? 'text-team-a' : 'text-team-b'}`}>
+                  {bottomTeamId === 'A' ? gameState.teamA.score : gameState.teamB.score}
+                </div>
+              </div>
             </div>
+
+            <Button variant="ghost" size="icon" onClick={onReset} className="rounded-full">
+              <RotateCcw size={18} className="text-muted-foreground" />
+            </Button>
+          </div>
+        </Card>
+
+        <div className="mx-auto mt-2 flex w-full max-w-md flex-col gap-2">
+          {gameState.isOvertime && (
+            <Badge variant="warning" className="justify-center rounded-md py-1">
+              Overtime
+            </Badge>
           )}
           {gameState.phase === 'redemption' && (
-            <div className="bg-gradient-to-r from-red-100 to-red-50 text-red-800 text-[9px] font-bold py-2 px-3 rounded-lg text-center uppercase tracking-widest border border-red-300 mt-2 shadow-sm">
+            <Badge className="justify-center rounded-md border border-destructive/30 bg-destructive/10 text-destructive">
               Redemption: Team {gameState.redemptionTrailer} within 1 pt
-            </div>
+            </Badge>
           )}
         </div>
-
       </header>
 
       {/* Main Game Layout */}
@@ -326,27 +335,29 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
               index={0}
               isOffense={gameState.offenseTeamId === topTeamId}
               isCurrentThrower={gameState.offenseTeamId === topTeamId && gameState.currentThrowerIndex === 0}
-              teamColor={topTeamColor}
+              teamId={topTeamId}
               onBeerAdd={handleBeerAdd}
               onDieLost={handleDieLost}
               onSelectThrower={gameState.offenseTeamId === topTeamId ? (i) => onUpdate({ ...gameState, currentThrowerIndex: i }) : undefined}
               isSmall={true}
             />
           </div>
-          <button
+          <Button
+            variant="secondary"
+            size="icon"
             onClick={() => swapTeamPlayers(topTeamId)}
-            className="mx-2 p-2 rounded-full bg-white/80 border border-gray-200 shadow-sm hover:bg-white active:scale-95 transition-all"
+            className="mx-2 rounded-full"
             title={`Swap Team ${topTeamId} player positions`}
           >
-            <ArrowLeftRight size={14} className="text-gray-600" />
-          </button>
+            <ArrowLeftRight size={14} className="text-muted-foreground" />
+          </Button>
           <div className="flex-1 flex justify-center max-w-[45%]">
             <PlayerCard
               player={topTeam.players[1]}
               index={1}
               isOffense={gameState.offenseTeamId === topTeamId}
               isCurrentThrower={gameState.offenseTeamId === topTeamId && gameState.currentThrowerIndex === 1}
-              teamColor={topTeamColor}
+              teamId={topTeamId}
               onBeerAdd={handleBeerAdd}
               onDieLost={handleDieLost}
               onSelectThrower={gameState.offenseTeamId === topTeamId ? (i) => onUpdate({ ...gameState, currentThrowerIndex: i }) : undefined}
@@ -356,210 +367,209 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
         </div>
 
         {/* CENTER TABLE (Skinny Rectangle) */}
-        <div className="flex-1 w-[60%] max-w-[240px] my-6 bg-slate-50 rounded-lg border-[8px] border-slate-300 shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative flex flex-col items-center justify-center min-h-[300px] z-10 mx-auto">
+        <div className="relative mx-auto my-6 flex min-h-[300px] w-[60%] max-w-[240px] flex-1 flex-col items-center justify-center rounded-lg border-4 border-border bg-card shadow-md">
           {/* Horizontal Center Line */}
-          <div className="absolute top-1/2 left-0 right-0 h-1.5 bg-slate-200 transform -translate-y-1/2" />
+          <div className="absolute left-0 right-0 top-1/2 h-1 bg-muted-foreground/10 -translate-y-1/2" />
           
           {/* Floating Control Boxes */}
           <AnimatePresence mode="wait">
             {gameState.phase !== 'gameOver' && step === 'OFFENSE' && (
-              <motion.div 
+              <motion.div
                 key="offense"
-                initial={{ scale: 0.9, opacity: 0 }}
+                initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.3)] border border-slate-100 p-5 w-[85vw] max-w-[340px] relative z-20 text-center"
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="relative z-20 w-[85vw] max-w-[340px] rounded-lg border bg-card p-5 text-center shadow-lg"
               >
-                <div className="text-lg font-black text-gray-800 uppercase tracking-widest mb-4">Throw Result</div>
-                
-                <div className="flex gap-2 justify-center w-full">
-                  <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => { setCurrentThrowResult(ThrowResult.MISS); setStep('FIFA'); }}
-                    className="flex-1 py-3 bg-gray-500 text-white rounded-xl font-bold text-sm shadow-md"
+                <div className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">Throw Result</div>
+
+                <div className="flex w-full gap-2">
+                  <Button
+                    variant="secondary"
+                    className="flex-1"
+                    onClick={() => { setCurrentThrowResult(ThrowResult.MISS); setStep("FIFA"); }}
                   >
                     Miss
-                  </motion.button>
-                  <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => { setCurrentThrowResult(ThrowResult.VALID_HIT); setStep('DEFENSE'); }}
-                    className="flex-1 py-3 bg-emerald-500 text-white rounded-xl font-bold text-sm shadow-md"
+                  </Button>
+                  <Button
+                    variant="success"
+                    className="flex-1"
+                    onClick={() => { setCurrentThrowResult(ThrowResult.VALID_HIT); setStep("DEFENSE"); }}
                   >
                     Hit
-                  </motion.button>
-                  <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => { setCurrentThrowResult(ThrowResult.PLUNK); setStep('PLUNK_DEFENSE'); }}
-                    className="flex-1 py-3 bg-amber-500 text-white rounded-xl font-bold text-sm shadow-md"
+                  </Button>
+                  <Button
+                    variant="warning"
+                    className="flex-1"
+                    onClick={() => { setCurrentThrowResult(ThrowResult.PLUNK); setStep("PLUNK_DEFENSE"); }}
                   >
                     Plunk
-                  </motion.button>
+                  </Button>
                 </div>
 
-                <div className="flex items-center justify-center gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-gray-200 w-fit mx-auto mt-4 shadow-inner">
-                  <span className="text-sm font-semibold text-gray-700">Cup?</span>
-                  <button 
-                    onClick={() => setCupHit(!cupHit)}
-                    className={`w-10 h-5 rounded-full transition-all relative shadow-inner ${cupHit ? 'bg-emerald-500' : 'bg-gray-300'}`}
-                  >
-                    <motion.div 
-                      initial={false}
-                      animate={{ x: cupHit ? 20 : 2 }}
-                      className="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-md"
-                    />
-                  </button>
+                <div className="mx-auto mt-4 flex w-fit items-center gap-3 rounded-full border bg-muted/50 px-4 py-2">
+                  <span className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Cup</span>
+                  <Switch checked={cupHit} onCheckedChange={setCupHit} />
                 </div>
               </motion.div>
             )}
 
             {/* DEFENSE STEP */}
             {gameState.phase !== 'gameOver' && step === 'DEFENSE' && (
-              <motion.div 
+              <motion.div
                 key="defense"
                 initial={{ x: 50, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: -50, opacity: 0 }}
-                className="bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.3)] border border-slate-100 p-5 w-[85vw] max-w-[340px] relative z-20"
+                className="relative z-20 w-[85vw] max-w-[340px] rounded-lg border bg-card p-5 shadow-lg"
               >
-                <div className="text-sm font-black text-gray-800 uppercase tracking-widest text-center mb-3">Defense</div>
-                <div className="grid grid-cols-2 gap-2 mb-3">
+                <div className="mb-3 text-center text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">Defense</div>
+                <div className="mb-3 grid grid-cols-2 gap-2">
                   {defenseTeam.players.map(p => (
-                    <div key={p.id} className="space-y-1 bg-slate-50 p-2 rounded-xl border border-gray-200">
-                      <div className="text-xs font-bold text-gray-700 text-center">{p.name}</div>
+                    <div key={p.id} className="space-y-1 rounded-md border bg-muted/30 p-2">
+                      <div className="text-center text-xs font-semibold text-foreground/80">{p.name}</div>
                       <div className="flex flex-col gap-1">
                         {[DefenseResult.WHIFF, DefenseResult.FAIL, DefenseResult.CATCH].map(res => (
-                          <button
+                          <Button
                             key={res}
+                            size="sm"
+                            variant="outline"
                             disabled={isStay}
                             onClick={() => setDefenseSelections(prev => ({
                               ...prev, [p.id]: prev[p.id] === res ? null : res
                             }))}
-                            className={`py-1.5 rounded-lg font-bold text-xs border transition-all ${
-                              defenseSelections[p.id] === res 
-                                ? 'bg-sky-500 border-sky-600 text-white shadow-inner' 
-                                : 'bg-white border-gray-300 text-gray-600'
+                            className={`h-7 text-[10px] uppercase tracking-widest ${
+                              defenseSelections[p.id] === res
+                                ? 'border-primary bg-primary text-primary-foreground hover:bg-primary/90'
+                                : 'bg-card text-foreground hover:bg-muted'
                             } ${isStay ? 'opacity-40' : ''}`}
                           >
                             {res}
-                          </button>
+                          </Button>
                         ))}
                       </div>
                     </div>
                   ))}
                 </div>
-                <button
+                <Button
+                  variant={isStay ? 'warning' : 'outline'}
+                  className="mb-3 w-full"
                   onClick={() => { setIsStay(!isStay); setDefenseSelections({}); }}
-                  className={`w-full py-2 mb-3 rounded-xl font-bold text-sm border transition-all ${
-                    isStay ? 'bg-amber-500 border-amber-600 text-white shadow-md' : 'bg-white border-gray-300 text-gray-600'
-                  }`}
                 >
-                  STAY
-                </button>
+                  Stay
+                </Button>
                 <div className="flex gap-2">
-                  <button onClick={() => setStep('OFFENSE')} className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-700 rounded-xl font-bold text-sm transition-colors">
+                  <Button variant="secondary" className="flex-1" onClick={() => setStep('OFFENSE')}>
                     Back
-                  </button>
-                  <button onClick={() => resolveThrow()} className="flex-1 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-bold text-sm shadow-md transition-colors">
+                  </Button>
+                  <Button className="flex-1" onClick={() => resolveThrow()}>
                     OK
-                  </button>
+                  </Button>
                 </div>
               </motion.div>
             )}
 
             {/* PLUNK STEP */}
             {gameState.phase !== 'gameOver' && step === 'PLUNK_DEFENSE' && (
-              <motion.div 
+              <motion.div
                 key="plunk"
-                initial={{ scale: 0.9, opacity: 0 }}
+                initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.3)] border border-slate-100 p-5 w-[85vw] max-w-[340px] relative z-20 text-center space-y-4"
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="relative z-20 w-[85vw] max-w-[340px] space-y-4 rounded-lg border bg-card p-5 text-center shadow-lg"
               >
                 <div>
-                  <div className="text-amber-500 font-black text-2xl uppercase tracking-widest">PLUNK!</div>
-                  <p className="text-gray-600 text-sm font-semibold">Who drinks?</p>
+                  <div className="text-lg font-semibold uppercase tracking-[0.3em] text-warning">Plunk</div>
+                  <p className="text-sm text-muted-foreground">Who drinks?</p>
                 </div>
-                <div className="flex gap-2 justify-center">
+                <div className="flex gap-2">
                   {defenseTeam.players.map(p => (
-                    <button
+                    <Button
                       key={p.id}
-                      onClick={() => setPlunkDrinkerId(p.id)}
-                      className={`flex-1 py-3 rounded-xl font-bold text-sm border-2 transition-all ${
-                        plunkDrinkerId === p.id ? 'bg-amber-100 border-amber-500 text-amber-700' : 'bg-slate-50 border-gray-200 text-gray-700'
+                      variant="outline"
+                      className={`flex-1 ${
+                        plunkDrinkerId === p.id
+                          ? 'border-warning bg-warning/20 text-warning'
+                          : 'bg-card text-foreground'
                       }`}
+                      onClick={() => setPlunkDrinkerId(p.id)}
                     >
                       {p.name}
-                    </button>
+                    </Button>
                   ))}
                 </div>
                 <div className="flex gap-2 pt-2">
-                  <button onClick={() => setStep('OFFENSE')} className="flex-1 py-2 bg-gray-100 border border-gray-300 text-gray-700 rounded-xl font-bold text-sm">
+                  <Button variant="secondary" className="flex-1" onClick={() => setStep('OFFENSE')}>
                     Back
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    className="flex-1"
                     disabled={!plunkDrinkerId}
                     onClick={() => resolveThrow()}
-                    className={`flex-1 py-2 rounded-xl font-bold text-sm shadow-md transition-all ${
-                      plunkDrinkerId ? 'bg-amber-500 text-white' : 'bg-gray-200 text-gray-400'
-                    }`}
                   >
                     OK
-                  </button>
+                  </Button>
                 </div>
               </motion.div>
             )}
 
             {/* FIFA STEP */}
             {gameState.phase !== 'gameOver' && step === 'FIFA' && (
-              <motion.div 
+              <motion.div
                 key="fifa"
                 initial={{ x: 50, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: -50, opacity: 0 }}
-                className="bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.3)] border border-slate-100 p-5 w-[85vw] max-w-[340px] relative z-20"
+                className="relative z-20 w-[85vw] max-w-[340px] rounded-lg border bg-card p-5 shadow-lg"
               >
-                <div className="text-sm font-black text-gray-800 uppercase text-center tracking-widest mb-3">FIFA</div>
-                <div className="space-y-3 mb-4">
-                  <div className="bg-slate-50 p-2 rounded-xl border border-gray-200">
-                    <div className="text-xs font-bold text-gray-700 mb-1 text-center">Kick</div>
+                <div className="mb-3 text-center text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">Fifa</div>
+                <div className="mb-4 space-y-3">
+                  <div className="rounded-md border bg-muted/30 p-2">
+                    <div className="mb-2 text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Kick</div>
                     <div className="flex gap-2">
                       {defenseTeam.players.map(p => (
-                        <button
+                        <Button
                           key={p.id}
-                          onClick={() => setFifaKickerId(fifaKickerId === p.id ? null : p.id)}
-                          className={`flex-1 py-2 rounded-lg font-bold text-xs border transition-all ${
-                            fifaKickerId === p.id ? 'bg-sky-500 border-sky-600 text-white shadow-inner' : 'bg-white border-gray-300 text-gray-600'
+                          variant="outline"
+                          className={`flex-1 ${
+                            fifaKickerId === p.id
+                              ? 'border-primary bg-primary text-primary-foreground'
+                              : 'bg-card text-foreground'
                           }`}
+                          onClick={() => setFifaKickerId(fifaKickerId === p.id ? null : p.id)}
                         >
                           {p.name.split(' ')[0]}
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   </div>
-                  <div className="bg-slate-50 p-2 rounded-xl border border-gray-200">
-                    <div className="text-xs font-bold text-gray-700 mb-1 text-center">Catch</div>
+                  <div className="rounded-md border bg-muted/30 p-2">
+                    <div className="mb-2 text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Catch</div>
                     <div className="flex gap-2">
                       {defenseTeam.players.map(p => (
-                        <button
+                        <Button
                           key={p.id}
-                          onClick={() => setFifaCatcherId(fifaCatcherId === p.id ? null : p.id)}
-                          className={`flex-1 py-2 rounded-lg font-bold text-xs border transition-all ${
-                            fifaCatcherId === p.id ? 'bg-emerald-500 border-emerald-600 text-white shadow-inner' : 'bg-white border-gray-300 text-gray-600'
+                          variant="outline"
+                          className={`flex-1 ${
+                            fifaCatcherId === p.id
+                              ? 'border-success bg-success text-white'
+                              : 'bg-card text-foreground'
                           }`}
+                          onClick={() => setFifaCatcherId(fifaCatcherId === p.id ? null : p.id)}
                         >
                           {p.name.split(' ')[0]}
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => setStep('OFFENSE')} className="flex-1 py-2 bg-gray-100 border border-gray-300 text-gray-700 rounded-xl font-bold text-sm">
+                  <Button variant="secondary" className="flex-1" onClick={() => setStep('OFFENSE')}>
                     Back
-                  </button>
-                  <button onClick={() => resolveThrow()} className="flex-1 py-2 bg-sky-600 text-white rounded-xl font-bold text-sm shadow-md">
+                  </Button>
+                  <Button className="flex-1" onClick={() => resolveThrow()}>
                     OK
-                  </button>
+                  </Button>
                 </div>
               </motion.div>
             )}
@@ -575,27 +585,29 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
               index={0}
               isOffense={gameState.offenseTeamId === bottomTeamId}
               isCurrentThrower={gameState.offenseTeamId === bottomTeamId && gameState.currentThrowerIndex === 0}
-              teamColor={bottomTeamColor}
+              teamId={bottomTeamId}
               onBeerAdd={handleBeerAdd}
               onDieLost={handleDieLost}
               onSelectThrower={gameState.offenseTeamId === bottomTeamId ? (i) => onUpdate({ ...gameState, currentThrowerIndex: i }) : undefined}
               isSmall={true}
             />
           </div>
-          <button
+          <Button
+            variant="secondary"
+            size="icon"
             onClick={() => swapTeamPlayers(bottomTeamId)}
-            className="mx-2 p-2 rounded-full bg-white/80 border border-gray-200 shadow-sm hover:bg-white active:scale-95 transition-all"
+            className="mx-2 rounded-full"
             title={`Swap Team ${bottomTeamId} player positions`}
           >
-            <ArrowLeftRight size={14} className="text-gray-600" />
-          </button>
+            <ArrowLeftRight size={14} className="text-muted-foreground" />
+          </Button>
           <div className="flex-1 flex justify-center max-w-[45%]">
             <PlayerCard
               player={bottomTeam.players[1]}
               index={1}
               isOffense={gameState.offenseTeamId === bottomTeamId}
               isCurrentThrower={gameState.offenseTeamId === bottomTeamId && gameState.currentThrowerIndex === 1}
-              teamColor={bottomTeamColor}
+              teamId={bottomTeamId}
               onBeerAdd={handleBeerAdd}
               onDieLost={handleDieLost}
               onSelectThrower={gameState.offenseTeamId === bottomTeamId ? (i) => onUpdate({ ...gameState, currentThrowerIndex: i }) : undefined}
@@ -607,27 +619,29 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
       </main>
 
       {/* Game Over Overlay */}
-      {gameState.phase === 'gameOver' && (
-        <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-auto">
-          <motion.div
-            key="gameover"
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.3)] border border-slate-100 p-5 w-[85vw] max-w-[340px] text-center"
-          >
-            <div className="bg-emerald-50 rounded-2xl p-4 border-2 border-emerald-200 mb-4">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <Trophy size={20} className="text-emerald-500" />
-                <span className="text-sm font-black text-emerald-700 uppercase tracking-widest">Game Over</span>
-              </div>
-              <div className="text-2xl font-black text-emerald-800">Team {gameState.winner} Wins!</div>
-            </div>
-            <button onClick={onReset} className="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-bold text-sm shadow-lg">
+      <Dialog open={gameState.phase === 'gameOver'}>
+        <DialogContent
+          showClose={false}
+          onEscapeKeyDown={(event) => event.preventDefault()}
+          onInteractOutside={(event) => event.preventDefault()}
+          className="max-w-sm"
+        >
+          <DialogHeader className="items-center text-center">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Trophy size={18} className="text-success" />
+              Game Over
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4 rounded-lg border border-success/30 bg-success/10 px-4 py-3 text-center text-base font-semibold text-success">
+            Team {gameState.winner} Wins!
+          </div>
+          <DialogFooter className="mt-6">
+            <Button className="w-full" onClick={onReset}>
               New Game
-            </button>
-          </motion.div>
-        </div>
-      )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

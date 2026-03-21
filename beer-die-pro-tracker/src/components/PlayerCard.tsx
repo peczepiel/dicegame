@@ -1,6 +1,11 @@
 import React from 'react';
-import { Player } from '../types';
 import { Beer, Dice5, Plus, Minus } from 'lucide-react';
+
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+
+import { Player } from '../types';
 
 interface PlayerCardProps {
   player: Player;
@@ -10,7 +15,7 @@ interface PlayerCardProps {
   onDieLost: (playerId: string) => void;
   onSelectThrower?: (index: number) => void;
   index: number;
-  teamColor: string;
+  teamId: 'A' | 'B';
   isSmall?: boolean;
 }
 
@@ -22,127 +27,137 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   onDieLost,
   onSelectThrower,
   index,
-  teamColor,
+  teamId,
   isSmall = false,
 }) => {
+  const teamRing = teamId === 'A' ? 'ring-team-a' : 'ring-team-b';
+  const teamBadge = teamId === 'A' ? 'bg-team-a text-white' : 'bg-team-b text-white';
+
   if (isSmall) {
     return (
-      <div 
+      <div
         onClick={() => isOffense && onSelectThrower?.(index)}
-        className={`relative flex-1 p-2 rounded-lg border-2 transition-all duration-300 min-w-0 ${
-          isCurrentThrower 
-            ? `bg-white shadow-lg scale-110 z-10 border-2` 
-            : 'border-gray-200 bg-white/70 hover:bg-white/90'
-        } ${isOffense ? 'cursor-pointer' : ''}`}
-        style={{ 
-          borderColor: isCurrentThrower ? teamColor : '#e5e7eb',
-          boxShadow: isCurrentThrower ? `0 0 0 3px ${teamColor}33` : undefined
-        }}
+        className={cn(
+          'relative flex-1 min-w-0 rounded-lg border bg-card p-2 transition-all',
+          isOffense && 'cursor-pointer',
+          isCurrentThrower ? `ring-2 ring-offset-2 ring-offset-background ${teamRing}` : 'border-border'
+        )}
       >
         {isCurrentThrower && (
-          <div 
-            className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[8px] font-bold text-white uppercase tracking-widest whitespace-nowrap"
-            style={{ backgroundColor: teamColor }}
-          >
+          <Badge className={cn('absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 text-[10px]', teamBadge)}>
             Throwing
-          </div>
+          </Badge>
         )}
 
         <div className="text-center">
-          <h3 className="font-bold text-xs truncate">{player.name}</h3>
-          <div className="flex items-center justify-center gap-2 mt-1">
-            <div className="flex items-center gap-0.5">
-              <Beer size={12} className="text-amber-600" />
-              <span className="text-amber-600 font-bold text-xs">{player.stats.beerTotal}</span>
+          <h3 className="truncate text-xs font-semibold">{player.name}</h3>
+          <div className="mt-1 flex items-center justify-center gap-2">
+            <div className={cn('flex items-center gap-1 text-xs font-semibold', 'text-warning')}>
+              <Beer size={12} />
+              {player.stats.beerTotal}
             </div>
-            <div className="flex items-center gap-0.5">
-              <Dice5 size={12} className="text-red-600" />
-              <span className="text-red-600 font-bold text-xs">{player.stats.lostDice}</span>
+            <div className={cn('flex items-center gap-1 text-xs font-semibold', 'text-destructive')}>
+              <Dice5 size={12} />
+              {player.stats.lostDice}
             </div>
           </div>
         </div>
 
-        <div className="flex gap-1 mt-2">
-          <button
-            onClick={(e) => { e.stopPropagation(); onBeerAdd(player.id); }}
-            className="flex-1 flex items-center justify-center bg-gradient-to-br from-amber-100 to-amber-50 text-amber-700 p-1 rounded-md active:from-amber-200 transition-all border border-amber-200 hover:border-amber-300"
-            title="Add Beer"
+        <div className="mt-2 flex gap-1">
+          <Button
+            size="icon"
+            variant="outline"
+            className="h-7 w-full border-warning/30 bg-warning/10 text-warning hover:bg-warning/20"
+            onClick={(e) => {
+              e.stopPropagation();
+              onBeerAdd(player.id);
+            }}
+            title="Add beer"
           >
             <Plus size={12} />
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onDieLost(player.id); }}
-            className="flex-1 flex items-center justify-center bg-gradient-to-br from-red-100 to-red-50 text-red-700 p-1 rounded-md active:from-red-200 transition-all border border-red-200 hover:border-red-300"
-            title="Lost Die"
+          </Button>
+          <Button
+            size="icon"
+            variant="outline"
+            className="h-7 w-full border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDieLost(player.id);
+            }}
+            title="Lost die"
           >
             <Minus size={12} />
-          </button>
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div 
+    <div
       onClick={() => isOffense && onSelectThrower?.(index)}
-      className={`relative flex-1 p-3 rounded-2xl border-2 transition-all duration-300 ${
-        isCurrentThrower 
-          ? `bg-white shadow-md scale-105 z-10` 
-          : 'border-gray-200 bg-white/60'
-      } ${isOffense ? 'cursor-pointer' : ''}`}
-      style={{ borderColor: isCurrentThrower ? teamColor : '#e5e7eb' }}
+      className={cn(
+        'relative flex-1 rounded-lg border bg-card p-3 shadow-sm transition-all',
+        isOffense && 'cursor-pointer',
+        isCurrentThrower ? `ring-2 ring-offset-2 ring-offset-background ${teamRing}` : 'border-border'
+      )}
     >
       {isCurrentThrower && (
-        <div 
-          className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-bold text-white uppercase tracking-widest"
-          style={{ backgroundColor: teamColor }}
-        >
+        <Badge className={cn('absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1', teamBadge)}>
           Throwing
-        </div>
+        </Badge>
       )}
 
-      <div className="flex justify-between items-start mb-2">
-        <h3 className="font-bold text-lg truncate max-w-[80px]">{player.name}</h3>
+      <div className="mb-2 flex items-start justify-between">
+        <h3 className="max-w-[90px] truncate text-base font-semibold">{player.name}</h3>
         <div className="flex flex-col items-end gap-1">
-           <div className="flex items-center gap-1 text-amber-600 font-bold text-sm">
-             <Beer size={14} />
-             {player.stats.beerTotal}
-           </div>
-           <div className="flex items-center gap-1 text-red-500 font-bold text-sm">
-             <Dice5 size={14} />
-             {player.stats.lostDice}
-           </div>
+          <div className="flex items-center gap-1 text-sm font-semibold text-warning">
+            <Beer size={14} />
+            {player.stats.beerTotal}
+          </div>
+          <div className="flex items-center gap-1 text-sm font-semibold text-destructive">
+            <Dice5 size={14} />
+            {player.stats.lostDice}
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 mt-3">
-        <button
-          onClick={(e) => { e.stopPropagation(); onBeerAdd(player.id); }}
-          className="flex items-center justify-center gap-1 bg-gradient-to-br from-amber-100 to-amber-50 text-amber-700 py-2 rounded-xl active:from-amber-200 transition-all border border-amber-200 hover:border-amber-300"
+      <div className="grid grid-cols-2 gap-2">
+        <Button
+          variant="outline"
+          className="border-warning/30 bg-warning/10 text-warning hover:bg-warning/20"
+          onClick={(e) => {
+            e.stopPropagation();
+            onBeerAdd(player.id);
+          }}
         >
           <Plus size={14} />
           <Beer size={16} />
-        </button>
-        <button
-          onClick={(e) => { e.stopPropagation(); onDieLost(player.id); }}
-          className="flex items-center justify-center gap-1 bg-gradient-to-br from-red-100 to-red-50 text-red-700 py-2 rounded-xl active:from-red-200 transition-all border border-red-200 hover:border-red-300"
+        </Button>
+        <Button
+          variant="outline"
+          className="border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDieLost(player.id);
+          }}
         >
           <Minus size={14} />
           <Dice5 size={16} />
-        </button>
+        </Button>
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-1 text-[9px] font-medium text-gray-500 uppercase text-center">
+      <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px] font-medium uppercase text-muted-foreground">
         <div>
-          <div className="text-black font-bold text-xs">{player.stats.miss}</div>
+          <div className="text-sm font-semibold text-foreground">{player.stats.miss}</div>
           Miss
         </div>
         <div>
-          <div className="text-black font-bold text-xs">{player.stats.validHit}</div>
+          <div className="text-sm font-semibold text-foreground">{player.stats.validHit}</div>
           Hit
         </div>
         <div>
-          <div className="text-black font-bold text-xs">{player.stats.catch}</div>
+          <div className="text-sm font-semibold text-foreground">{player.stats.catch}</div>
           Catch
         </div>
       </div>

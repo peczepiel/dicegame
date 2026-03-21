@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Trophy, Users, Target, Play } from 'lucide-react';
+import { Play, Target, Trophy, Users } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 
 interface SetupScreenProps {
   onStart: (pA1: string, pA2: string, pB1: string, pB2: string, target: number) => void;
@@ -15,112 +19,124 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStart }) => {
   const [isCustom, setIsCustom] = useState(false);
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col min-h-screen bg-gradient-to-br from-white via-sky-50 to-sky-100 p-6 pb-12 font-sans"
+      className="min-h-screen bg-app px-6 pb-12 pt-8"
     >
-      <header className="mb-10 mt-4">
-        <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-sky-600 to-sky-500 tracking-tight">Beer Die Pro</h1>
-        <p className="text-gray-600 text-lg font-medium mt-2">Set up your 2v2 match</p>
-      </header>
+      <div className="mx-auto flex w-full max-w-md flex-col">
+        <header className="mb-8 text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border bg-card px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground shadow-sm">
+            <Trophy size={14} className="text-primary" />
+            Beer Die Pro
+          </div>
+          <h1 className="mt-4 text-3xl font-bold tracking-tight text-foreground">Set up your match</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Enter players and target score to start.</p>
+        </header>
 
-      <div className="space-y-6 flex-1">
-        {/* Team A */}
-        <section className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-sky-100/50">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center">
-              <Users size={24} className="text-white" />
-            </div>
-            <h2 className="font-bold text-xl uppercase tracking-wide text-sky-700">Team A</h2>
-          </div>
-          <div className="space-y-4">
-            <input
-              type="text"
-              placeholder="Player 1 Name"
-              className="w-full bg-gradient-to-br from-sky-50 to-sky-100/50 border-2 border-sky-200 rounded-xl p-4 text-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all placeholder-gray-400"
-              value={pA1}
-              onChange={(e) => setPA1(e.target.value)}
-            />
-            <input
-              type="text"
-              placeholder="Player 2 Name"
-              className="w-full bg-gradient-to-br from-sky-50 to-sky-100/50 border-2 border-sky-200 rounded-xl p-4 text-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all placeholder-gray-400"
-              value={pA2}
-              onChange={(e) => setPA2(e.target.value)}
-            />
-          </div>
-        </section>
-
-        {/* Team B */}
-        <section className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-red-100/50">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center">
-              <Users size={24} className="text-white" />
-            </div>
-            <h2 className="font-bold text-xl uppercase tracking-wide text-red-700">Team B</h2>
-          </div>
-          <div className="space-y-4">
-            <input
-              type="text"
-              placeholder="Player 1 Name"
-              className="w-full bg-gradient-to-br from-red-50 to-red-100/50 border-2 border-red-200 rounded-xl p-4 text-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all placeholder-gray-400"
-              value={pB1}
-              onChange={(e) => setPB1(e.target.value)}
-            />
-            <input
-              type="text"
-              placeholder="Player 2 Name"
-              className="w-full bg-gradient-to-br from-red-50 to-red-100/50 border-2 border-red-200 rounded-xl p-4 text-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all placeholder-gray-400"
-              value={pB2}
-              onChange={(e) => setPB2(e.target.value)}
-            />
-          </div>
-        </section>
-
-        {/* Target Score */}
-        <section className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-emerald-100/50">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
-              <Target size={24} className="text-white" />
-            </div>
-            <h2 className="font-bold text-xl uppercase tracking-wide text-emerald-700">Target Score</h2>
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => { setTarget(11); setIsCustom(false); }}
-              className={`flex-1 py-4 rounded-xl font-bold text-lg transition-all ${!isCustom ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-300/50 scale-105' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-            >
-              11
-            </button>
-            <button
-              onClick={() => setIsCustom(true)}
-              className={`flex-1 py-4 rounded-xl font-bold text-lg transition-all ${isCustom ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-300/50 scale-105' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-            >
-              Custom
-            </button>
-          </div>
-          {isCustom && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-4">
-              <input
-                type="number"
-                placeholder="Enter custom score"
-                className="w-full bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-2 border-emerald-200 rounded-xl p-4 text-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all placeholder-gray-400"
-                value={target}
-                onChange={(e) => setTarget(parseInt(e.target.value) || 0)}
+        <div className="space-y-6">
+          <Card className="bg-card/90">
+            <CardHeader className="flex flex-row items-center gap-3 space-y-0">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-team-a/10 text-team-a">
+                <Users size={20} />
+              </div>
+              <CardTitle className="text-base uppercase tracking-[0.2em] text-team-a">Team A</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Input
+                placeholder="Player 1 name"
+                value={pA1}
+                onChange={(e) => setPA1(e.target.value)}
+                className="border-team-a/30 focus-visible:ring-team-a"
               />
-            </motion.div>
-          )}
-        </section>
-      </div>
+              <Input
+                placeholder="Player 2 name"
+                value={pA2}
+                onChange={(e) => setPA2(e.target.value)}
+                className="border-team-a/30 focus-visible:ring-team-a"
+              />
+            </CardContent>
+          </Card>
 
-      <button
-        onClick={() => onStart(pA1, pA2, pB1, pB2, target)}
-        className="w-full bg-gradient-to-br from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 text-white py-5 rounded-2xl font-bold text-xl shadow-xl shadow-sky-400/50 flex items-center justify-center gap-3 active:scale-95 transition-all mt-8"
-      >
-        <Play fill="white" size={24} />
-        Start Game
-      </button>
+          <Card className="bg-card/90">
+            <CardHeader className="flex flex-row items-center gap-3 space-y-0">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-team-b/10 text-team-b">
+                <Users size={20} />
+              </div>
+              <CardTitle className="text-base uppercase tracking-[0.2em] text-team-b">Team B</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Input
+                placeholder="Player 1 name"
+                value={pB1}
+                onChange={(e) => setPB1(e.target.value)}
+                className="border-team-b/30 focus-visible:ring-team-b"
+              />
+              <Input
+                placeholder="Player 2 name"
+                value={pB2}
+                onChange={(e) => setPB2(e.target.value)}
+                className="border-team-b/30 focus-visible:ring-team-b"
+              />
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card/90">
+            <CardHeader className="flex flex-row items-center gap-3 space-y-0">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-warning/10 text-warning">
+                <Target size={20} />
+              </div>
+              <CardTitle className="text-base uppercase tracking-[0.2em] text-warning">Target Score</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  type="button"
+                  variant={!isCustom ? 'default' : 'secondary'}
+                  className={!isCustom ? 'shadow-md' : ''}
+                  onClick={() => {
+                    setTarget(11);
+                    setIsCustom(false);
+                  }}
+                >
+                  11
+                </Button>
+                <Button
+                  type="button"
+                  variant={isCustom ? 'default' : 'secondary'}
+                  className={isCustom ? 'shadow-md' : ''}
+                  onClick={() => setIsCustom(true)}
+                >
+                  Custom
+                </Button>
+              </div>
+              {isCustom && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="pt-2"
+                >
+                  <Input
+                    type="number"
+                    placeholder="Enter custom score"
+                    value={target}
+                    onChange={(e) => setTarget(parseInt(e.target.value) || 0)}
+                  />
+                </motion.div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <Button
+          size="lg"
+          className="mt-8 w-full gap-2 text-base"
+          onClick={() => onStart(pA1, pA2, pB1, pB2, target)}
+        >
+          <Play size={18} />
+          Start Game
+        </Button>
+      </div>
     </motion.div>
   );
 };

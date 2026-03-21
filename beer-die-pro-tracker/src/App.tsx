@@ -22,7 +22,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-sky-50 to-sky-100 selection:bg-sky-200">
+    <div className="min-h-screen bg-app selection:bg-primary/20">
       {screen === 'SETUP' && (
         <SetupScreen onStart={handleStartGame} />
       )}

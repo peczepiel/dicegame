@@ -28,7 +28,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
   const [cupHit, setCupHit] = useState(false);
   const [fifaKickerId, setFifaKickerId] = useState<string | null>(null);
   const [fifaCatcherId, setFifaCatcherId] = useState<string | null>(null);
-  const [defenseSelections, setDefenseSelections] = useState<Record<string, DefenseResult | null>>({});
+  const [defensePlayerId, setDefensePlayerId] = useState<string | null>(null);
+  const [defenseResult, setDefenseResult] = useState<DefenseResult | null>(null);
   const [isStay, setIsStay] = useState(false);
   const [plunkDrinkerId, setPlunkDrinkerId] = useState<string | null>(null);
   const [isTeamAOnTop, setIsTeamAOnTop] = useState(true);
@@ -59,6 +60,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
     setStep('OFFENSE');
     setCurrentThrowResult(null);
     setCupHit(false);
+    setDefensePlayerId(null);
+    setDefenseResult(null);
+    setIsStay(false);
   };
 
   const handleBeerAdd = (playerId: string) => {
@@ -148,6 +152,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
     if (currentThrowResult === ThrowResult.MISS) updatedThrower.stats.miss++;
     if (currentThrowResult === ThrowResult.VALID_HIT) updatedThrower.stats.validHit++;
     if (currentThrowResult === ThrowResult.PLUNK) updatedThrower.stats.plunk++;
+    if (currentThrowResult === ThrowResult.VALID_HIT && isStay) updatedThrower.stats.stay++;
     offTeam.players[gameState.currentThrowerIndex] = updatedThrower;
 
     if (currentThrowResult === ThrowResult.PLUNK) {
@@ -160,25 +165,18 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
     } else if (currentThrowResult === ThrowResult.VALID_HIT) {
       let scored = false;
 
-      if (isStay) {
-        defTeam.players = defTeam.players.map(p => ({
-          ...p, stats: { ...p.stats, stay: p.stats.stay + 1 }
-        })) as [Player, Player];
-      } else {
-        Object.entries(defenseSelections).forEach(([pid, res]) => {
-          if (!res) return;
-          if (res === DefenseResult.WHIFF || res === DefenseResult.FAIL) scored = true;
-          
-          defTeam.players = defTeam.players.map(p => {
-            if (p.id !== pid) return p;
-            const updated = { ...p };
-            if (res === DefenseResult.WHIFF) updated.stats.whiff++;
-            if (res === DefenseResult.FAIL) updated.stats.fail++;
-            if (res === DefenseResult.STAY) updated.stats.stay++;
-            if (res === DefenseResult.CATCH) updated.stats.catch++;
-            return updated;
-          }) as [Player, Player];
-        });
+      if (!isStay && defensePlayerId && defenseResult) {
+        if (defenseResult === DefenseResult.WHIFF || defenseResult === DefenseResult.FAIL) scored = true;
+
+        defTeam.players = defTeam.players.map(p => {
+          if (p.id !== defensePlayerId) return p;
+          const updated = { ...p };
+          if (defenseResult === DefenseResult.WHIFF) updated.stats.whiff++;
+          if (defenseResult === DefenseResult.FAIL) updated.stats.fail++;
+          if (defenseResult === DefenseResult.STAY) updated.stats.stay++;
+          if (defenseResult === DefenseResult.CATCH) updated.stats.catch++;
+          return updated;
+        }) as [Player, Player];
       }
 
       if (scored) {
@@ -260,7 +258,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
     setCupHit(false);
     setFifaKickerId(null);
     setFifaCatcherId(null);
-    setDefenseSelections({});
+    setDefensePlayerId(null);
+    setDefenseResult(null);
     setIsStay(false);
     setPlunkDrinkerId(null);
   };
@@ -424,6 +423,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
                 className="relative z-20 w-[85vw] max-w-[340px] rounded-lg border bg-card p-5 shadow-lg"
               >
                 <div className="mb-3 text-center text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">Defense</div>
+                <div className="mb-2 text-center text-[10px] font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                  Choose One Defender Outcome
+                </div>
                 <div className="mb-3 grid grid-cols-2 gap-2">
                   {defenseTeam.players.map(p => (
                     <div key={p.id} className="space-y-1 rounded-md border bg-muted/30 p-2">
@@ -435,11 +437,13 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
                             size="sm"
                             variant="outline"
                             disabled={isStay}
-                            onClick={() => setDefenseSelections(prev => ({
-                              ...prev, [p.id]: prev[p.id] === res ? null : res
-                            }))}
+                            onClick={() => {
+                              const isSame = defensePlayerId === p.id && defenseResult === res;
+                              setDefensePlayerId(isSame ? null : p.id);
+                              setDefenseResult(isSame ? null : res);
+                            }}
                             className={`h-7 text-[10px] uppercase tracking-widest ${
-                              defenseSelections[p.id] === res
+                              defensePlayerId === p.id && defenseResult === res
                                 ? 'border-primary bg-primary text-primary-foreground hover:bg-primary/90'
                                 : 'bg-card text-foreground hover:bg-muted'
                             } ${isStay ? 'opacity-40' : ''}`}
@@ -454,7 +458,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
                 <Button
                   variant={isStay ? 'warning' : 'outline'}
                   className="mb-3 w-full"
-                  onClick={() => { setIsStay(!isStay); setDefenseSelections({}); }}
+                  onClick={() => {
+                    setIsStay(!isStay);
+                    setDefensePlayerId(null);
+                    setDefenseResult(null);
+                  }}
                 >
                   Stay
                 </Button>

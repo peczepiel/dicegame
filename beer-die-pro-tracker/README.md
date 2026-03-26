@@ -19,7 +19,7 @@ View your app in AI Studio: https://ai.studio/apps/40534bdc-818d-41c5-beae-846b1
    - `APP_URL`
    - `MONGODB_URI`
    - `MONGODB_DB_NAME` (optional, defaults to `beer_die`)
-   - `BACKEND_PORT` (optional, defaults to `4000`)
+   - `PORT` (optional locally, defaults to `4000`; set automatically by Render/Railway)
    - `VITE_BACKEND_URL` (optional, defaults to `http://localhost:4000`)
 3. Run the frontend:
    `npm run dev`

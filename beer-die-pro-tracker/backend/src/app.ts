@@ -148,6 +148,7 @@ interface CalculatedTotals {
   catchSuccessRate: number;
   missRate: number;
   plunkRate: number;
+  hitPercentage: number;
   sluggingPercentage: number;
 }
 
@@ -197,6 +198,7 @@ const createEmptyCalculatedTotals = (): CalculatedTotals => ({
   catchSuccessRate: 0,
   missRate: 0,
   plunkRate: 0,
+  hitPercentage: 0,
   sluggingPercentage: 0,
 });
 
@@ -525,9 +527,10 @@ const calculateTotals = (raw: RawTotals): CalculatedTotals => ({
   catchSuccessRate: raw.catch + raw.fail > 0 ? raw.catch / (raw.catch + raw.fail) : 0,
   missRate: raw.throwsTaken > 0 ? raw.miss / raw.throwsTaken : 0,
   plunkRate: raw.throwsTaken > 0 ? raw.plunk / raw.throwsTaken : 0,
+  hitPercentage: raw.throwsTaken > 0 ? (raw.validHit + raw.plunk) / raw.throwsTaken : 0,
   sluggingPercentage:
     raw.throwsTaken > 0
-      ? (raw.validHitWithPoint + raw.cupHitWithPoint + raw.plunk * 3) / raw.throwsTaken
+      ? (raw.validHitWithPoint + (raw.cupHitWithPoint * 2) + (raw.plunk * 3)) / raw.throwsTaken
       : 0,
 });
 
@@ -651,6 +654,98 @@ app.get('/health/db', async (_req, res) => {
       message,
       timestamp: new Date().toISOString(),
     });
+  }
+});
+
+app.get('/api/players', async (_req, res) => {
+  try {
+    const db = getDb();
+    const players = await db
+      .collection('players')
+      .find({ isActive: true })
+      .project({ _id: 1, name: 1 })
+      .sort({ name: 1 })
+      .toArray();
+
+    return res.json({
+      players: players.map((p) => ({
+        id: p._id.toString(),
+        name: p.name,
+      })),
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return res.status(500).json({ message });
+  }
+});
+
+app.post('/api/players', async (req, res) => {
+  try {
+    const { name } = req.body ?? {};
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return res.status(400).json({ message: 'Player name is required and must be a non-empty string' });
+    }
+
+    const db = getDb();
+    const normalizedName = name.trim();
+    const nameLower = normalizedName.toLowerCase();
+    const now = new Date();
+
+    const existingPlayer = await db.collection('players').findOne({ nameLower });
+    if (existingPlayer && existingPlayer.isActive) {
+      return res.status(400).json({ message: 'Player already exists' });
+    }
+
+    if (existingPlayer && !existingPlayer.isActive) {
+      await db.collection('players').updateOne(
+        { _id: existingPlayer._id },
+        {
+          $set: {
+            name: normalizedName,
+            nameLower,
+            isActive: true,
+            updatedAt: now,
+          },
+        }
+      );
+      return res.status(201).json({
+        player: {
+          id: existingPlayer._id.toString(),
+          name: normalizedName,
+        },
+        timestamp: now.toISOString(),
+      });
+    }
+
+    const result = await db.collection('players').insertOne({
+      name: normalizedName,
+      nameLower,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await db.collection('playerTotals').insertOne({
+      playerId: result.insertedId,
+      playerName: normalizedName,
+      playerNameLower: nameLower,
+      raw: createEmptyRawTotals(),
+      calculated: createEmptyCalculatedTotals(),
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return res.status(201).json({
+      player: {
+        id: result.insertedId.toString(),
+        name: normalizedName,
+      },
+      timestamp: now.toISOString(),
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return res.status(500).json({ message });
   }
 });
 

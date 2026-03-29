@@ -25,6 +25,8 @@ interface SetupScreenProps {
   onStart: (pA1: string, pA2: string, pB1: string, pB2: string, target: number) => void;
 }
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
+
 export const SetupScreen: React.FC<SetupScreenProps> = ({ onStart }) => {
   const [pA1, setPA1] = useState('');
   const [pA2, setPA2] = useState('');
@@ -41,7 +43,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStart }) => {
   const fetchPlayers = async () => {
     try {
       console.log('Fetching players...');
-      const response = await fetch('/api/players');
+      const response = await fetch(`${BACKEND_URL}/api/players`);
       console.log('Response status:', response.status);
       
       if (!response.ok) {
@@ -52,7 +54,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStart }) => {
       console.log('Response text:', responseText);
 
       if (!responseText) {
-        console.warn('Empty response from /api/players');
+        console.warn('Empty response from players endpoint');
         setPlayers([]);
         return;
       }
@@ -74,7 +76,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStart }) => {
     setAddingPlayer(true);
     try {
       console.log('Adding player:', newPlayerName);
-      const response = await fetch('/api/players', {
+      const response = await fetch(`${BACKEND_URL}/api/players`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newPlayerName.trim() }),
@@ -85,7 +87,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStart }) => {
       console.log('Add response text:', responseText);
 
       if (!responseText) {
-        alert('Server returned an empty response. Make sure backend is running on port 4000.');
+        alert(`Server returned an empty response from ${BACKEND_URL}.`);
         return;
       }
 

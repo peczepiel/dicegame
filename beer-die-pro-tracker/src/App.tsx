@@ -3,6 +3,7 @@ import { SetupScreen } from './components/SetupScreen';
 import { GameScreen } from './components/GameScreen';
 import { GameState, Screen } from './types';
 import { createInitialState } from './constants';
+import { ThemeProvider } from './ThemeContext';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
 
@@ -48,8 +49,8 @@ export default function App() {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [gameId, setGameId] = useState<string | null>(null);
 
-  const handleStartGame = async (pA1: string, pA2: string, pB1: string, pB2: string, target: number) => {
-    const initialState = createInitialState(pA1, pA2, pB1, pB2, target);
+  const handleStartGame = async (pA1: string, pA2: string, pB1: string, pB2: string, target: number, teamAName?: string, teamBName?: string) => {
+    const initialState = createInitialState(pA1, pA2, pB1, pB2, target, teamAName, teamBName);
     let createdGameId: string;
     try {
       createdGameId = await createGameOnBackend(initialState);
@@ -80,20 +81,22 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-app selection:bg-primary/20">
-      {screen === 'SETUP' && (
-        <SetupScreen onStart={handleStartGame} />
-      )}
-      
-      {screen === 'GAME' && gameState && (
-        <GameScreen 
-          gameState={gameState} 
-          onUpdate={handleGameUpdate} 
-          onReset={handleReset}
-        />
-      )}
+    <ThemeProvider>
+      <div className="min-h-screen bg-app selection:bg-primary/20">
+        {screen === 'SETUP' && (
+          <SetupScreen onStart={handleStartGame} />
+        )}
+        
+        {screen === 'GAME' && gameState && (
+          <GameScreen 
+            gameState={gameState} 
+            onUpdate={handleGameUpdate} 
+            onReset={handleReset}
+          />
+        )}
 
-      {/* Summary Screen could be added here */}
-    </div>
+        {/* Summary Screen could be added here */}
+      </div>
+    </ThemeProvider>
   );
 }

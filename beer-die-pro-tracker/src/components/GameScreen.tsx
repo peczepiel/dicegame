@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GameState, ThrowResult, DefenseResult, Player } from '../types';
 import { PlayerCard } from './PlayerCard';
-import { Undo2, RotateCcw, Trophy, ArrowUpDown, ArrowLeftRight } from 'lucide-react';
+import { Confetti } from './Confetti';
+import { Undo2, RotateCcw, Trophy, ArrowUpDown, ArrowLeftRight, Beer, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { shouldTriggerRedemption, resolveRedemptionOutcome } from '../gameLogic';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +34,24 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
   const [isStay, setIsStay] = useState(false);
   const [plunkDrinkerId, setPlunkDrinkerId] = useState<string | null>(null);
   const [isTeamAOnTop, setIsTeamAOnTop] = useState(true);
+  const [beerNotification, setBeerNotification] = useState<{ teamName: string; teamId: 'A' | 'B' } | null>(null);
+  const [gameStartTime] = useState<number>(Date.now());
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - gameStartTime) / 1000));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [gameStartTime]);
+
+  const formatTime = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const offenseTeam = gameState.offenseTeamId === 'A' ? gameState.teamA : gameState.teamB;
   const defenseTeam = gameState.offenseTeamId === 'A' ? gameState.teamB : gameState.teamA;
@@ -112,18 +131,21 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
     const final = state.isOvertime ? Infinity : state.targetScore;
 
     let newState = { ...state };
+    let penaltyTriggered: { teamName: string; teamId: 'A' | 'B' } | null = null;
 
     if (!newState.teamAMidpointTriggered && newState.teamA.score >= midpoint) {
       newState.teamB.players = newState.teamB.players.map(p => ({
         ...p, stats: { ...p.stats, beerTotal: p.stats.beerTotal + 0.5 }
       })) as [Player, Player];
       newState.teamAMidpointTriggered = true;
+      penaltyTriggered = { teamName: newState.teamB.name, teamId: 'B' };
     }
     if (!newState.teamAFinalTriggered && newState.teamA.score >= final) {
       newState.teamB.players = newState.teamB.players.map(p => ({
         ...p, stats: { ...p.stats, beerTotal: p.stats.beerTotal + 0.5 }
       })) as [Player, Player];
       newState.teamAFinalTriggered = true;
+      // Don't show notification for final score, only for midpoint
     }
 
     if (!newState.teamBMidpointTriggered && newState.teamB.score >= midpoint) {
@@ -131,12 +153,18 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
         ...p, stats: { ...p.stats, beerTotal: p.stats.beerTotal + 0.5 }
       })) as [Player, Player];
       newState.teamBMidpointTriggered = true;
+      penaltyTriggered = { teamName: newState.teamA.name, teamId: 'A' };
     }
     if (!newState.teamBFinalTriggered && newState.teamB.score >= final) {
       newState.teamA.players = newState.teamA.players.map(p => ({
         ...p, stats: { ...p.stats, beerTotal: p.stats.beerTotal + 0.5 }
       })) as [Player, Player];
       newState.teamBFinalTriggered = true;
+      // Don't show notification for final score, only for midpoint
+    }
+
+    if (penaltyTriggered) {
+      setBeerNotification(penaltyTriggered);
     }
 
     return newState;
@@ -278,7 +306,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
             <div className="flex items-center gap-4">
               <div className="text-center">
                 <div className={`text-[10px] font-semibold uppercase tracking-[0.3em] ${topTeamId === 'A' ? 'text-team-a' : 'text-team-b'}`}>
-                  Team {topTeamId}
+                  {topTeam.name}
                 </div>
                 <div className={`text-3xl font-semibold leading-none ${topTeamId === 'A' ? 'text-team-a' : 'text-team-b'}`}>
                   {topTeamId === 'A' ? gameState.teamA.score : gameState.teamB.score}
@@ -295,7 +323,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
               </Button>
               <div className="text-center">
                 <div className={`text-[10px] font-semibold uppercase tracking-[0.3em] ${bottomTeamId === 'A' ? 'text-team-a' : 'text-team-b'}`}>
-                  Team {bottomTeamId}
+                  {bottomTeam.name}
                 </div>
                 <div className={`text-3xl font-semibold leading-none ${bottomTeamId === 'A' ? 'text-team-a' : 'text-team-b'}`}>
                   {bottomTeamId === 'A' ? gameState.teamA.score : gameState.teamB.score}
@@ -317,9 +345,13 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
           )}
           {gameState.phase === 'redemption' && (
             <Badge className="justify-center rounded-md border border-destructive/30 bg-destructive/10 text-destructive">
-              Redemption: Team {gameState.redemptionTrailer} within 1 pt
+              Redemption: {gameState.redemptionTrailer === 'A' ? gameState.teamA.name : gameState.teamB.name} within 1 pt
             </Badge>
           )}
+          <Badge className="justify-center rounded-md gap-2 bg-muted/50 py-1">
+            <Clock size={14} className="text-muted-foreground" />
+            <span className="font-mono text-sm text-foreground">{formatTime(elapsedSeconds)}</span>
+          </Badge>
         </div>
       </header>
 
@@ -626,7 +658,71 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
 
       </main>
 
+      {/* Beer Notification Dialog */}
+      <Dialog open={beerNotification !== null} onOpenChange={(open) => !open && setBeerNotification(null)}>
+        <DialogContent className="max-w-sm bg-destructive/95 border-destructive" showClose={true}>
+          <DialogHeader className="items-center text-center">
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: 'spring', stiffness: 100, damping: 10 }}
+              className="mb-4"
+            >
+              <Beer size={64} className="text-yellow-300" />
+            </motion.div>
+            <DialogTitle className="text-2xl font-bold text-white">
+              Cheers! 🍺
+            </DialogTitle>
+          </DialogHeader>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mt-6 rounded-lg border-2 border-yellow-300/50 bg-white/10 px-6 py-4 text-center backdrop-blur-sm"
+          >
+            <p className="text-xl font-bold text-white">
+              {beerNotification?.teamName} needs to drink!
+            </p>
+          </motion.div>
+          <motion.div
+            animate={{ y: [0, -10, 0] }}
+            transition={{ repeat: Infinity, duration: 1.5 }}
+            className="flex justify-center gap-3 mt-6"
+          >
+            <motion.div
+              animate={{ rotate: [0, 10, -10, 0] }}
+              transition={{ repeat: Infinity, duration: 1 }}
+            >
+              <Beer size={32} className="text-yellow-300" />
+            </motion.div>
+            <motion.div
+              animate={{ rotate: [0, -10, 10, 0] }}
+              transition={{ repeat: Infinity, duration: 1, delay: 0.2 }}
+            >
+              <Beer size={32} className="text-yellow-300" />
+            </motion.div>
+            <motion.div
+              animate={{ rotate: [0, 10, -10, 0] }}
+              transition={{ repeat: Infinity, duration: 1, delay: 0.4 }}
+            >
+              <Beer size={32} className="text-yellow-300" />
+            </motion.div>
+          </motion.div>
+          <DialogFooter className="mt-6">
+            <Button 
+              className="w-full bg-yellow-300 text-black hover:bg-yellow-400" 
+              onClick={() => setBeerNotification(null)}
+            >
+              Cheers! 🍻
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Game Over Overlay */}
+      <AnimatePresence>
+        {gameState.phase === 'gameOver' && <Confetti />}
+      </AnimatePresence>
       <Dialog open={gameState.phase === 'gameOver'}>
         <DialogContent
           showClose={false}
@@ -634,20 +730,58 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, onUpdate, onR
           onInteractOutside={(event) => event.preventDefault()}
           className="max-w-sm"
         >
-          <DialogHeader className="items-center text-center">
-            <DialogTitle className="flex items-center gap-2 text-lg">
-              <Trophy size={18} className="text-success" />
-              Game Over
-            </DialogTitle>
-          </DialogHeader>
-          <div className="mt-4 rounded-lg border border-success/30 bg-success/10 px-4 py-3 text-center text-base font-semibold text-success">
-            Team {gameState.winner} Wins!
-          </div>
-          <DialogFooter className="mt-6">
-            <Button className="w-full" onClick={onReset}>
-              New Game
-            </Button>
-          </DialogFooter>
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+          >
+            <DialogHeader className="items-center text-center">
+              <motion.div
+                animate={{ rotate: [0, -10, 10, -10, 0] }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+              >
+                <DialogTitle className="flex items-center justify-center gap-2 text-lg">
+                  <Trophy size={18} className="text-success" />
+                  Game Over
+                </DialogTitle>
+              </motion.div>
+            </DialogHeader>
+            <motion.div
+              className="mt-4 rounded-lg border border-success/30 bg-success/10 px-4 py-3 text-center text-base font-semibold text-success"
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              {gameState.winner === 'A' ? gameState.teamA.name : gameState.teamB.name} Wins!
+            </motion.div>
+            <motion.div
+              className="mt-4 flex justify-center gap-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              {[0, 1, 2].map((i) => (
+                <motion.div
+                  key={i}
+                  animate={{ y: [0, -10, 0], scale: [1, 1.2, 1] }}
+                  transition={{
+                    duration: 0.6,
+                    delay: 0.5 + i * 0.1,
+                    repeat: Infinity,
+                    repeatDelay: 1.5,
+                  }}
+                  className="text-2xl"
+                >
+                  🎉
+                </motion.div>
+              ))}
+            </motion.div>
+            <DialogFooter className="mt-6">
+              <Button className="w-full" onClick={onReset}>
+                New Game
+              </Button>
+            </DialogFooter>
+          </motion.div>
         </DialogContent>
       </Dialog>
     </div>

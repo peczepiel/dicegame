@@ -33,6 +33,7 @@ export interface Player {
 
 export interface Team {
   id: 'A' | 'B';
+  name: string;
   players: [Player, Player];
   score: number;
 }

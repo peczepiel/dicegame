@@ -524,7 +524,7 @@ const calculateTotals = (raw: RawTotals): CalculatedTotals => ({
   pointsPerGame: raw.gamesPlayed > 0 ? raw.totalPointsScored / raw.gamesPlayed : 0,
   hitScoringRate: raw.validHit > 0 ? raw.validHitWithPoint / raw.validHit : 0,
   cupConversionRate: raw.cupHit > 0 ? raw.cupHitWithPoint / raw.cupHit : 0,
-  catchSuccessRate: raw.catch + raw.fail > 0 ? raw.catch / (raw.catch + raw.fail) : 0,
+  catchSuccessRate: raw.catch + raw.fail > 0 ? raw.catch / (raw.catch + raw.fail + raw.whiff) : 0,
   missRate: raw.throwsTaken > 0 ? raw.miss / raw.throwsTaken : 0,
   plunkRate: raw.throwsTaken > 0 ? raw.plunk / raw.throwsTaken : 0,
   hitPercentage: raw.throwsTaken > 0 ? (raw.validHit + raw.plunk) / raw.throwsTaken : 0,
@@ -749,18 +749,190 @@ app.post('/api/players', async (req, res) => {
   }
 });
 
+app.get('/api/teams', async (_req, res) => {
+  try {
+    const db = getDb();
+    const teams = await db
+      .collection('teams')
+      .find({ isActive: true })
+      .project({ _id: 1, name: 1 })
+      .sort({ name: 1 })
+      .toArray();
+
+    return res.json({
+      teams: teams.map((t) => ({
+        id: t._id.toString(),
+        name: t.name,
+      })),
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return res.status(500).json({ message });
+  }
+});
+
+app.post('/api/teams', async (req, res) => {
+  try {
+    const { name } = req.body ?? {};
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return res.status(400).json({ message: 'Team name is required and must be a non-empty string' });
+    }
+
+    const db = getDb();
+    const normalizedName = name.trim();
+    const nameLower = normalizedName.toLowerCase();
+    const now = new Date();
+
+    const existingTeam = await db.collection('teams').findOne({ nameLower });
+    if (existingTeam && existingTeam.isActive) {
+      return res.status(400).json({ message: 'Team already exists' });
+    }
+
+    if (existingTeam && !existingTeam.isActive) {
+      await db.collection('teams').updateOne(
+        { _id: existingTeam._id },
+        {
+          $set: {
+            name: normalizedName,
+            nameLower,
+            isActive: true,
+            updatedAt: now,
+          },
+        }
+      );
+      return res.status(201).json({
+        team: {
+          id: existingTeam._id.toString(),
+          name: normalizedName,
+        },
+        timestamp: now.toISOString(),
+      });
+    }
+
+    const result = await db.collection('teams').insertOne({
+      name: normalizedName,
+      nameLower,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return res.status(201).json({
+      team: {
+        id: result.insertedId.toString(),
+        name: normalizedName,
+      },
+      timestamp: now.toISOString(),
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return res.status(500).json({ message });
+  }
+});
+
+app.get('/api/player-teams/:playerId1/:playerId2', async (req, res) => {
+  try {
+    const { playerId1, playerId2 } = req.params;
+    if (!ObjectId.isValid(playerId1) || !ObjectId.isValid(playerId2)) {
+      return res.status(400).json({ message: 'Invalid player IDs' });
+    }
+
+    const db = getDb();
+    const id1 = new ObjectId(playerId1);
+    const id2 = new ObjectId(playerId2);
+    
+    // Check both orderings since it could have been stored either way
+    const association = await db.collection('playerTeamAssociations').findOne({
+      $or: [
+        { player1Id: id1, player2Id: id2 },
+        { player1Id: id2, player2Id: id1 }
+      ]
+    });
+
+    if (association) {
+      return res.json({
+        teamName: association.teamName,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    return res.status(404).json({ message: 'No team association found' });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return res.status(500).json({ message });
+  }
+});
+
+app.post('/api/player-teams', async (req, res) => {
+  try {
+    const { playerId1, playerId2, teamName } = req.body ?? {};
+    
+    if (!playerId1 || !playerId2 || !teamName || typeof teamName !== 'string' || teamName.trim().length === 0) {
+      return res.status(400).json({ message: 'playerId1, playerId2, and teamName are required' });
+    }
+
+    if (!ObjectId.isValid(playerId1) || !ObjectId.isValid(playerId2)) {
+      return res.status(400).json({ message: 'Invalid player IDs' });
+    }
+
+    const db = getDb();
+    const id1 = new ObjectId(playerId1);
+    const id2 = new ObjectId(playerId2);
+    const normalizedTeamName = teamName.trim();
+    const now = new Date();
+
+    // Always store with player1 < player2 for consistency
+    const sortedIds = id1.toString() < id2.toString() 
+      ? [id1, id2] 
+      : [id2, id1];
+
+    const result = await db.collection('playerTeamAssociations').updateOne(
+      {
+        player1Id: sortedIds[0],
+        player2Id: sortedIds[1]
+      },
+      {
+        $set: {
+          player1Id: sortedIds[0],
+          player2Id: sortedIds[1],
+          teamName: normalizedTeamName,
+          updatedAt: now,
+        },
+        $setOnInsert: {
+          createdAt: now,
+        }
+      },
+      { upsert: true }
+    );
+
+    return res.status(201).json({
+      playerTeamAssociation: {
+        player1Id: sortedIds[0].toString(),
+        player2Id: sortedIds[1].toString(),
+        teamName: normalizedTeamName,
+      },
+      timestamp: now.toISOString(),
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return res.status(500).json({ message });
+  }
+});
+
 app.get('/api/debug/counts', async (_req, res) => {
   try {
     const db = getDb();
-    const [players, games, playerTotals] = await Promise.all([
+    const [players, games, playerTotals, teams] = await Promise.all([
       db.collection('players').countDocuments(),
       db.collection('games').countDocuments(),
       db.collection('playerTotals').countDocuments(),
+      db.collection('teams').countDocuments(),
     ]);
 
     return res.json({
       database: db.databaseName,
-      counts: { players, games, playerTotals },
+      counts: { players, games, playerTotals, teams },
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

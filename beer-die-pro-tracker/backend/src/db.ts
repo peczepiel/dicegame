@@ -8,6 +8,9 @@ const ensureIndexes = async (database: Db): Promise<void> => {
   await Promise.all([
     database.collection('players').createIndex({ nameLower: 1 }, { unique: true }),
     database.collection('players').createIndex({ isActive: 1 }),
+    database.collection('teams').createIndex({ nameLower: 1 }, { unique: true }),
+    database.collection('teams').createIndex({ isActive: 1 }),
+    database.collection('playerTeamAssociations').createIndex({ player1Id: 1, player2Id: 1 }, { unique: true }),
     database.collection('games').createIndex({ status: 1, startedAt: -1 }),
     database.collection('playerTotals').createIndex({ playerId: 1 }, { unique: true }),
     database.collection('playerTotals').createIndex({ playerNameLower: 1 }),

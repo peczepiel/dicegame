@@ -25,15 +25,19 @@ export const createInitialState = (
   playerA2: string,
   playerB1: string,
   playerB2: string,
-  targetScore: number
+  targetScore: number,
+  teamAName: string = 'Team A',
+  teamBName: string = 'Team B'
 ): GameState => ({
   teamA: {
     id: 'A',
+    name: teamAName || 'Team A',
     players: [createPlayer('A1', playerA1), createPlayer('A2', playerA2)],
     score: 0,
   },
   teamB: {
     id: 'B',
+    name: teamBName || 'Team B',
     players: [createPlayer('B1', playerB1), createPlayer('B2', playerB2)],
     score: 0,
   },

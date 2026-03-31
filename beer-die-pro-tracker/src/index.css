@@ -37,6 +37,38 @@
     --shadow-lg: 0 18px 50px hsl(220 20% 20% / 0.18);
   }
 
+  /* Dark mode */
+  .dark {
+    --background: 212 30% 12%;
+    --foreground: 213 31% 91%;
+    --card: 212 30% 18%;
+    --card-foreground: 213 31% 91%;
+    --popover: 212 30% 18%;
+    --popover-foreground: 213 31% 91%;
+    --primary: 214 90% 55%;
+    --primary-foreground: 212 30% 12%;
+    --secondary: 212 25% 26%;
+    --secondary-foreground: 213 31% 91%;
+    --muted: 212 18% 32%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 212 25% 26%;
+    --accent-foreground: 213 31% 91%;
+    --destructive: 0 72% 60%;
+    --destructive-foreground: 212 30% 12%;
+    --border: 212 25% 26%;
+    --input: 212 25% 26%;
+    --ring: 214 90% 55%;
+
+    --team-a: 214 100% 60%;
+    --team-b: 0 84% 65%;
+    --success: 142 76% 46%;
+    --warning: 38 92% 55%;
+
+    --shadow-sm: 0 1px 2px hsl(220 20% 0% / 0.3);
+    --shadow-md: 0 8px 24px hsl(220 20% 0% / 0.4);
+    --shadow-lg: 0 18px 50px hsl(220 20% 0% / 0.5);
+  }
+
   * {
     @apply border-border;
     -webkit-tap-highlight-color: transparent;
